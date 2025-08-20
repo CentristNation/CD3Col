@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Political Data Mapping Application</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+            gap: 1rem;
+            padding: 1rem;
+        }
+
+        .sidebar {
+            width: 350px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 1.5rem;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow-y: auto;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .map-container {
+            flex: 1;
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        #map {
+            width: 100%;
+            height: 100%;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .header h1 {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .section {
+            margin-bottom: 2rem;
+        }
+
+        .section h3 {
+            color: #333;
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #e1e5e9;
+        }
+
+        .filter-group {
+            margin-bottom: 1rem;
+        }
+
+        .filter-label {
+            display: block;
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 0.5rem;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .filter-inputs {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .filter-input {
+            flex: 1;
+            padding: 0.5rem;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            transition: all 0.3s ease;
+        }
+
+        .filter-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .reset-btn {
+            background: linear-gradient(135deg, #ff6b6b, #ff8e8e);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin-top: 1rem;
+        }
+
+        .reset-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(255, 107, 107, 0.3);
+        }
+
+        .summary-table {
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .summary-table table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .summary-table th {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 0.75rem 0.5rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-align: left;
+        }
+
+        .summary-table td {
+            padding: 0.5rem;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+            font-size: 0.8rem;
+        }
+
+        .summary-table tr:nth-child(even) {
+            background: rgba(0, 0, 0, 0.02);
+        }
+
+        .legend {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 1rem;
+            border-radius: 12px;
+            margin-bottom: 1rem;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            margin-right: 0.5rem;
+            border: 1px solid rgba(0, 0, 0, 0.2);
+        }
+
+        .selection-info {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 1rem;
+            border-radius: 12px;
+            margin-bottom: 1rem;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 200px;
+            font-size: 1.1rem;
+            color: #666;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #e1e5e9;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .stat-value {
+            font-weight: 700;
+            color: #333;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 0.75rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="sidebar">
+            <div class="header">
+                <h1>Electoral Analytics: Proposed CD 3 (Collin County Part)</h1>
+                <p>Analysis by Ifte Islam PhD</p>
+            </div>
+
+            <div class="legend">
+                <h3>Map Legend</h3>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #3b82f6;"></div>
+                    <span>Democratic (>50%)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #ef4444;"></div>
+                    <span>Republican (≤50%)</span>
+                </div>
+            </div>
+
+            <div class="selection-info" id="selectionInfo">
+                Click on map areas to analyze
+            </div>
+
+            <div class="section">
+                <h3>🎯 Filters</h3>
+                
+                <div class="filter-group">
+                    <label class="filter-label">Turnout Percentage</label>
+                    <div class="filter-inputs">
+                        <input type="number" class="filter-input" id="turnoutMin" placeholder="Min" step="0.1">
+                        <input type="number" class="filter-input" id="turnoutMax" placeholder="Max" step="0.1">
+                    </div>
+                </div>
+
+                <div class="filter-group">
+                    <label class="filter-label">Democratic Percentage</label>
+                    <div class="filter-inputs">
+                        <input type="number" class="filter-input" id="demMin" placeholder="Min" step="0.1">
+                        <input type="number" class="filter-input" id="demMax" placeholder="Max" step="0.1">
+                    </div>
+                </div>
+
+                <div class="filter-group">
+                    <label class="filter-label">Republican Percentage</label>
+                    <div class="filter-inputs">
+                        <input type="number" class="filter-input" id="repMin" placeholder="Min" step="0.1">
+                        <input type="number" class="filter-input" id="repMax" placeholder="Max" step="0.1">
+                    </div>
+                </div>
+
+                <div class="filter-group">
+                    <label class="filter-label">Voting Age Population</label>
+                    <div class="filter-inputs">
+                        <input type="number" class="filter-input" id="vapMin" placeholder="Min">
+                        <input type="number" class="filter-input" id="vapMax" placeholder="Max">
+                    </div>
+                </div>
+
+                <div class="filter-group">
+                    <label class="filter-label">White VAP %</label>
+                    <div class="filter-inputs">
+                        <input type="number" class="filter-input" id="whiteVapMin" placeholder="Min" step="0.1">
+                        <input type="number" class="filter-input" id="whiteVapMax" placeholder="Max" step="0.1">
+                    </div>
+                </div>
+
+                <div class="filter-group">
+                    <label class="filter-label">Black VAP %</label>
+                    <div class="filter-inputs">
+                        <input type="number" class="filter-input" id="blackVapMin" placeholder="Min" step="0.1">
+                        <input type="number" class="filter-input" id="blackVapMax" placeholder="Max" step="0.1">
+                    </div>
+                </div>
+
+                <div class="filter-group">
+                    <label class="filter-label">Hispanic VAP %</label>
+                    <div class="filter-inputs">
+                        <input type="number" class="filter-input" id="hispanicVapMin" placeholder="Min" step="0.1">
+                        <input type="number" class="filter-input" id="hispanicVapMax" placeholder="Max" step="0.1">
+                    </div>
+                </div>
+
+                <button class="reset-btn" onclick="resetFilters()">Reset All Filters</button>
+            </div>
+
+            <div class="section">
+                <h3>📊 Summary Statistics</h3>
+                <div id="summaryContainer">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        Loading data...
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="map-container">
+            <div id="map"></div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+    <script>
+        let map, geojsonLayer, allData, selectedFeatures = [];
+
+        // Initialize map
+        function initMap() {
+            map = L.map('map').setView([39.8283, -98.5795], 4);
+            
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
+        }
+
+        // Load GeoJSON data
+        async function loadData() {
+            try {
+                const response = await window.fs.readFile('propcol.geojson', { encoding: 'utf8' });
+                allData = JSON.parse(response);
+                displayData(allData);
+                updateSummary();
+            } catch (error) {
+                console.error('Error loading data:', error);
+                document.getElementById('summaryContainer').innerHTML = 
+                    '<div style="color: #ff6b6b; text-align: center; padding: 2rem;">Error loading data. Please ensure propcol.geojson is uploaded.</div>';
+            }
+        }
+
+        // Get color based on Democratic percentage
+        function getColor(demPct) {
+            if (demPct == null) return '#gray';
+            return demPct > 0.5 ? '#3b82f6' : '#ef4444';
+        }
+
+        // Style function for features
+        function style(feature) {
+            const demPct = feature.properties.Dem_pct;
+            return {
+                fillColor: getColor(demPct),
+                weight: 1,
+                opacity: 1,
+                color: 'white',
+                fillOpacity: 0.7
+            };
+        }
+
+        // Highlight feature on hover
+        function highlightFeature(e) {
+            const layer = e.target;
+            layer.setStyle({
+                weight: 3,
+                color: '#ffffff',
+                fillOpacity: 0.9
+            });
+        }
+
+        // Reset highlight
+        function resetHighlight(e) {
+            if (selectedFeatures.includes(e.target)) return;
+            geojsonLayer.resetStyle(e.target);
+        }
+
+        // Handle feature click
+        function onFeatureClick(e) {
+            const layer = e.target;
+            const feature = layer.feature;
+            
+            if (selectedFeatures.includes(layer)) {
+                // Deselect
+                selectedFeatures = selectedFeatures.filter(f => f !== layer);
+                geojsonLayer.resetStyle(layer);
+            } else {
+                // Select
+                selectedFeatures.push(layer);
+                layer.setStyle({
+                    weight: 4,
+                    color: '#ffff00',
+                    fillOpacity: 0.9
+                });
+            }
+            
+            updateSummary();
+            updateSelectionInfo();
+        }
+
+        // Bind events to features
+        function onEachFeature(feature, layer) {
+            layer.on({
+                mouseover: highlightFeature,
+                mouseout: resetHighlight,
+                click: onFeatureClick
+            });
+
+            // Create popup content
+            const props = feature.properties;
+            const popupContent = `
+                <div style="font-family: Arial, sans-serif;">
+                    <h4 style="margin: 0 0 10px 0; color: #333;">${props.County || 'Area'}</h4>
+                    <table style="width: 100%; font-size: 12px;">
+                        <tr><td><b>Democratic %:</b></td><td>${(props.Dem_pct * 100).toFixed(1)}%</td></tr>
+                        <tr><td><b>Republican %:</b></td><td>${(props.Rep_pct * 100).toFixed(1)}%</td></tr>
+                        <tr><td><b>Turnout %:</b></td><td>${(props.turn_pct * 100).toFixed(1)}%</td></tr>
+                        <tr><td><b>Registered Voters:</b></td><td>${props.Reg_Voter?.toLocaleString() || 'N/A'}</td></tr>
+                        <tr><td><b>Votes Cast:</b></td><td>${props.Voted?.toLocaleString() || 'N/A'}</td></tr>
+                    </table>
+                </div>
+            `;
+            layer.bindPopup(popupContent);
+        }
+
+        // Display data on map
+        function displayData(data) {
+            if (geojsonLayer) {
+                map.removeLayer(geojsonLayer);
+            }
+
+            geojsonLayer = L.geoJSON(data, {
+                style: style,
+                onEachFeature: onEachFeature
+            }).addTo(map);
+
+            map.fitBounds(geojsonLayer.getBounds());
+        }
+
+        // Apply filters
+        function applyFilters() {
+            if (!allData) return;
+
+            const filters = {
+                turnoutMin: parseFloat(document.getElementById('turnoutMin').value) / 100 || null,
+                turnoutMax: parseFloat(document.getElementById('turnoutMax').value) / 100 || null,
+                demMin: parseFloat(document.getElementById('demMin').value) / 100 || null,
+                demMax: parseFloat(document.getElementById('demMax').value) / 100 || null,
+                repMin: parseFloat(document.getElementById('repMin').value) / 100 || null,
+                repMax: parseFloat(document.getElementById('repMax').value) / 100 || null,
+                vapMin: parseFloat(document.getElementById('vapMin').value) || null,
+                vapMax: parseFloat(document.getElementById('vapMax').value) || null,
+                whiteVapMin: parseFloat(document.getElementById('whiteVapMin').value) / 100 || null,
+                whiteVapMax: parseFloat(document.getElementById('whiteVapMax').value) / 100 || null,
+                blackVapMin: parseFloat(document.getElementById('blackVapMin').value) / 100 || null,
+                blackVapMax: parseFloat(document.getElementById('blackVapMax').value) / 100 || null,
+                hispanicVapMin: parseFloat(document.getElementById('hispanicVapMin').value) / 100 || null,
+                hispanicVapMax: parseFloat(document.getElementById('hispanicVapMax').value) / 100 || null
+            };
+
+            const filteredData = {
+                ...allData,
+                features: allData.features.filter(feature => {
+                    const props = feature.properties;
+                    
+                    return Object.keys(filters).every(key => {
+                        const value = filters[key];
+                        if (value === null) return true;
+
+                        const isMax = key.includes('Max');
+                        const propKey = key.replace('Min', '').replace('Max', '');
+                        
+                        let propValue;
+                        switch(propKey) {
+                            case 'turnout': propValue = props.turn_pct; break;
+                            case 'dem': propValue = props.Dem_pct; break;
+                            case 'rep': propValue = props.Rep_pct; break;
+                            case 'vap': propValue = props.vap; break;
+                            case 'whiteVap': propValue = props.White_Vap_pct; break;
+                            case 'blackVap': propValue = props.Black_Vap_pct; break;
+                            case 'hispanicVap': propValue = props.Hispanic_Vap_pct; break;
+                            default: return true;
+                        }
+
+                        if (propValue == null) return true;
+                        return isMax ? propValue <= value : propValue >= value;
+                    });
+                })
+            };
+
+            selectedFeatures = [];
+            displayData(filteredData);
+            updateSummary();
+            updateSelectionInfo();
+        }
+
+        // Reset all filters
+        function resetFilters() {
+            document.querySelectorAll('.filter-input').forEach(input => input.value = '');
+            selectedFeatures = [];
+            displayData(allData);
+            updateSummary();
+            updateSelectionInfo();
+        }
+
+        // Update selection info
+        function updateSelectionInfo() {
+            const info = document.getElementById('selectionInfo');
+            if (selectedFeatures.length === 0) {
+                info.textContent = 'Click on map areas to analyze';
+            } else {
+                info.textContent = `${selectedFeatures.length} area${selectedFeatures.length > 1 ? 's' : ''} selected`;
+            }
+        }
+
+        // Update summary statistics
+        function updateSummary() {
+            const container = document.getElementById('summaryContainer');
+            
+            let features;
+            if (selectedFeatures.length > 0) {
+                features = selectedFeatures.map(layer => layer.feature);
+            } else if (geojsonLayer) {
+                features = [];
+                geojsonLayer.eachLayer(layer => features.push(layer.feature));
+            } else {
+                return;
+            }
+
+            if (features.length === 0) {
+                container.innerHTML = '<div style="text-align: center; color: #666;">No data to display</div>';
+                return;
+            }
+
+            // Calculate sums and averages
+            const sums = {};
+            const averages = {};
+            const counts = {};
+
+            // Columns to sum
+            const sumColumns = ['Reg_Voter', 'Voted', 'Dem', 'Rep', 'Total', 'vap', 'anglovap', 'nanglovap', 'asianvap', 'blackvap', 'hispvap', 'bhvap'];
+            
+            // Columns to average
+            const avgColumns = ['turn_pct', 'Dem_pct', 'Rep_pct', 'White_Vap_pct', 'Black_Vap_pct', 'Asian_Vap_pct', 'Hispanic_Vap_pct'];
+
+            // Initialize
+            sumColumns.forEach(col => sums[col] = 0);
+            avgColumns.forEach(col => { averages[col] = 0; counts[col] = 0; });
+
+            // Calculate
+            features.forEach(feature => {
+                const props = feature.properties;
+                
+                sumColumns.forEach(col => {
+                    if (props[col] != null && !isNaN(props[col])) {
+                        sums[col] += props[col];
+                    }
+                });
+
+                avgColumns.forEach(col => {
+                    if (props[col] != null && !isNaN(props[col])) {
+                        averages[col] += props[col];
+                        counts[col]++;
+                    }
+                });
+            });
+
+            // Finalize averages
+            avgColumns.forEach(col => {
+                if (counts[col] > 0) {
+                    averages[col] = averages[col] / counts[col];
+                }
+            });
+
+            // Generate table
+            let tableHTML = `
+                <div class="summary-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Metric</th>
+                                <th>Value</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+
+            // Add sums
+            Object.entries(sums).forEach(([key, value]) => {
+                if (value > 0) {
+                    tableHTML += `
+                        <tr>
+                            <td class="stat-label">${key.replace(/_/g, ' ')}</td>
+                            <td class="stat-value">${value.toLocaleString()}</td>
+                        </tr>
+                    `;
+                }
+            });
+
+            // Add averages
+            Object.entries(averages).forEach(([key, value]) => {
+                if (counts[key] > 0) {
+                    const displayValue = key.includes('_pct') ? `${(value * 100).toFixed(1)}%` : value.toFixed(2);
+                    tableHTML += `
+                        <tr>
+                            <td class="stat-label">${key.replace(/_/g, ' ')}</td>
+                            <td class="stat-value">${displayValue}</td>
+                        </tr>
+                    `;
+                }
+            });
+
+            tableHTML += `
+                        </tbody>
+                    </table>
+                </div>
+            `;
+
+            container.innerHTML = tableHTML;
+        }
+
+        // Add event listeners for filters
+        document.addEventListener('DOMContentLoaded', function() {
+            initMap();
+            loadData();
+
+            // Add change listeners to all filter inputs
+            document.querySelectorAll('.filter-input').forEach(input => {
+                input.addEventListener('input', applyFilters);
+            });
+        });
+    </script>
+</body>
+</html>
