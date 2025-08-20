@@ -3,375 +3,878 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Political Data Mapping Application</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
+    <title>Electoral Analytics: Proposed CD 3 (Collin County Part)</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css">
     <style>
-        * {
+        body {
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-            min-height: 100vh;
-            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         }
-
+        
         .container {
             display: flex;
             height: 100vh;
-            gap: 1rem;
-            padding: 1rem;
         }
-
+        
         .sidebar {
-            width: 350px;
+            width: 320px;
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
-            border-radius: 20px;
-            padding: 1.5rem;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            border-right: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 15px;
             overflow-y: auto;
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
         }
-
+        
         .map-container {
             flex: 1;
-            background: white;
-            border-radius: 20px;
-            overflow: hidden;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            position: relative;
         }
-
+        
         #map {
-            width: 100%;
             height: 100%;
+            width: 100%;
         }
-
+        
         .header {
             text-align: center;
-            margin-bottom: 2rem;
+            margin-bottom: 15px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #007bff;
         }
-
-        .header h1 {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            font-size: 1.8rem;
-            font-weight: 700;
-            margin-bottom: 0.5rem;
-        }
-
-        .header p {
-            color: #666;
-            font-size: 0.9rem;
-        }
-
-        .section {
-            margin-bottom: 2rem;
-        }
-
-        .section h3 {
+        
+        .main-title {
+            font-size: 18px;
+            font-weight: bold;
             color: #333;
-            font-size: 1.1rem;
-            margin-bottom: 1rem;
-            padding-bottom: 0.5rem;
-            border-bottom: 2px solid #e1e5e9;
+            margin: 0;
+            line-height: 1.3;
         }
-
-        .filter-group {
-            margin-bottom: 1rem;
+        
+        .subtitle {
+            font-size: 13px;
+            color: #666;
+            margin: 3px 0 0 0;
         }
-
-        .filter-label {
-            display: block;
-            font-weight: 600;
-            color: #555;
-            margin-bottom: 0.5rem;
-            font-size: 0.85rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .filter-inputs {
-            display: flex;
-            gap: 0.5rem;
-            align-items: center;
-        }
-
-        .filter-input {
-            flex: 1;
-            padding: 0.5rem;
-            border: 2px solid #e1e5e9;
+        
+        .status-message {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 10px;
             border-radius: 8px;
-            font-size: 0.85rem;
-            transition: all 0.3s ease;
+            text-align: center;
+            margin-bottom: 15px;
+            font-size: 13px;
+            border-left: 4px solid #007bff;
         }
-
-        .filter-input:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        
+        .section {
+            background: rgba(255, 255, 255, 0.8);
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         }
-
-        .reset-btn {
-            background: linear-gradient(135deg, #ff6b6b, #ff8e8e);
+        
+        .section-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #333;
+            font-size: 14px;
+        }
+        
+        .selection-tools {
+            text-align: center;
+        }
+        
+        .tool-button {
+            background: #007bff;
             color: white;
             border: none;
-            padding: 0.75rem 1.5rem;
-            border-radius: 10px;
+            padding: 8px 12px;
+            margin: 3px;
+            border-radius: 5px;
             cursor: pointer;
-            font-weight: 600;
-            font-size: 0.9rem;
-            transition: all 0.3s ease;
+            font-size: 12px;
+            transition: background 0.3s;
+        }
+        
+        .tool-button:hover {
+            background: #0056b3;
+        }
+        
+        .tool-button.active {
+            background: #28a745;
+        }
+        
+        .filter-item {
+            margin-bottom: 12px;
+        }
+        
+        .filter-label {
+            display: flex;
+            align-items: center;
+            margin-bottom: 5px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .party-icon {
+            width: 20px;
+            height: 20px;
+            margin-right: 6px;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .dem-icon { color: #0066cc; }
+        .rep-icon { color: #cc0000; }
+        
+        .filter-slider {
             width: 100%;
-            margin-top: 1rem;
+            margin: 3px 0;
         }
-
-        .reset-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(255, 107, 107, 0.3);
+        
+        .filter-value {
+            font-size: 11px;
+            color: #666;
+            text-align: center;
         }
-
-        .summary-table {
-            background: rgba(255, 255, 255, 0.7);
-            border-radius: 12px;
-            overflow: hidden;
-            border: 1px solid rgba(0, 0, 0, 0.1);
+        
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            margin: 6px 0;
+            padding: 3px 0;
+            border-bottom: 1px solid #eee;
+            font-size: 12px;
         }
-
-        .summary-table table {
-            width: 100%;
-            border-collapse: collapse;
+        
+        .summary-label {
+            font-weight: 500;
+            color: #555;
         }
-
-        .summary-table th {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
-            padding: 0.75rem 0.5rem;
-            font-size: 0.8rem;
-            font-weight: 600;
-            text-align: left;
+        
+        .summary-value {
+            font-weight: bold;
+            color: #333;
         }
-
-        .summary-table td {
-            padding: 0.5rem;
-            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-            font-size: 0.8rem;
-        }
-
-        .summary-table tr:nth-child(even) {
-            background: rgba(0, 0, 0, 0.02);
-        }
-
+        
         .legend {
-            background: rgba(255, 255, 255, 0.9);
-            padding: 1rem;
-            border-radius: 12px;
-            margin-bottom: 1rem;
+            position: absolute;
+            bottom: 60px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 12px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            font-size: 12px;
         }
-
+        
+        .legend h4 {
+            margin: 0 0 8px 0;
+            color: #333;
+            font-size: 13px;
+        }
+        
         .legend-item {
             display: flex;
             align-items: center;
-            margin-bottom: 0.5rem;
+            margin: 4px 0;
         }
-
+        
         .legend-color {
-            width: 20px;
-            height: 20px;
-            border-radius: 4px;
-            margin-right: 0.5rem;
-            border: 1px solid rgba(0, 0, 0, 0.2);
+            width: 18px;
+            height: 12px;
+            margin-right: 6px;
+            border: 1px solid #ccc;
         }
-
-        .selection-info {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
-            padding: 1rem;
-            border-radius: 12px;
-            margin-bottom: 1rem;
+        
+        .credit {
+            position: absolute;
+            bottom: 10px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 6px 10px;
+            border-radius: 5px;
+            font-size: 11px;
+            color: #666;
+            z-index: 1000;
+        }
+        
+        .mode-info {
+            font-size: 10px;
+            margin-top: 5px;
+            color: #666;
             text-align: center;
-            font-weight: 600;
         }
-
-        .loading {
+        
+        .precinct-filter {
+            margin-bottom: 8px;
+        }
+        
+        .precinct-dropdown {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background: white;
+            font-size: 12px;
+            max-height: 150px;
+        }
+        
+        .buffer-controls {
             display: flex;
-            justify-content: center;
             align-items: center;
-            height: 200px;
-            font-size: 1.1rem;
+            gap: 8px;
+            margin-top: 8px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 8px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+        
+        .buffer-input {
+            flex: 1;
+        }
+        
+        .buffer-value {
+            font-size: 11px;
             color: #666;
+            min-width: 60px;
+        }
+        
+        .buffer-active {
+            background: #28a745 !important;
+            color: white !important;
+        }
+        
+        .buffer-active:hover {
+            background: #218838 !important;
+        }
+        
+        .buffer-mode-active {
+            border: 3px solid #28a745 !important;
+            box-shadow: 0 0 10px rgba(40, 167, 69, 0.5) !important;
         }
 
-        .spinner {
-            width: 40px;
-            height: 40px;
-            border: 4px solid #e1e5e9;
-            border-top: 4px solid #667eea;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin-right: 1rem;
-        }
 
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .stat-value {
-            font-weight: 700;
-            color: #333;
-        }
-
-        .stat-label {
-            color: #666;
-            font-size: 0.75rem;
-        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="sidebar">
             <div class="header">
-                <h1>Electoral Analytics: Proposed CD 3 (Collin County Part)</h1>
-                <p>Analysis by Ifte Islam PhD</p>
+                <h1 class="main-title">Electoral Analytics: Proposed CD 3 (Collin County Part)</h1>
+                <p class="subtitle">Analysis by Ifte Islam PhD</p>
+            </div>
+            
+            <div class="status-message" id="statusMessage">
+                Loading data...
             </div>
 
-            <div class="legend">
-                <h3>Map Legend</h3>
-                <div class="legend-item">
-                    <div class="legend-color" style="background: #3b82f6;"></div>
-                    <span>Democratic (>50%)</span>
+
+            
+            <div class="section" id="selectionSection">
+                <div class="section-title">Selection Tools</div>
+                <div class="selection-tools">
+                    <button class="tool-button" id="bufferBtn" onclick="toggleBufferMode()">Buffer Select</button>
+                    <button class="tool-button" id="clearSelection" onclick="clearAllSelections()">Clear All</button>
+                    <div class="mode-info" id="modeInfo">Click polygons to select</div>
+                    <div class="buffer-controls" id="bufferControls" style="display: none;">
+                        <input type="range" class="buffer-input" id="bufferRange" min="1" max="50" value="10">
+                        <div class="buffer-value" id="bufferValue">10 miles</div>
+                    </div>
                 </div>
-                <div class="legend-item">
-                    <div class="legend-color" style="background: #ef4444;"></div>
-                    <span>Republican (≤50%)</span>
+            </div>
+            
+            <div class="section" id="precinctSection">
+                <div class="section-title">Precinct Filter</div>
+                <div class="precinct-filter">
+                    <select class="precinct-dropdown" id="precinctFilter" multiple size="6">
+                        <option value="">Loading precincts...</option>
+                    </select>
+                </div>
+                <div style="display: flex; gap: 5px;">
+                    <button class="tool-button" onclick="selectAllPrecincts()" style="flex: 1; margin: 0;">All</button>
+                    <button class="tool-button" onclick="selectNoPrecincts()" style="flex: 1; margin: 0;">None</button>
                 </div>
             </div>
-
-            <div class="selection-info" id="selectionInfo">
-                Click on map areas to analyze
-            </div>
-
-            <div class="section">
-                <h3>🎯 Filters</h3>
+            
+            <div class="section" id="filterSection">
+                <div class="section-title">Filters (Min %)</div>
                 
-                <div class="filter-group">
-                    <label class="filter-label">Turnout Percentage</label>
-                    <div class="filter-inputs">
-                        <input type="number" class="filter-input" id="turnoutMin" placeholder="Min" step="0.1">
-                        <input type="number" class="filter-input" id="turnoutMax" placeholder="Max" step="0.1">
+                <div class="filter-item">
+                    <div class="filter-label">
+                        <div class="party-icon dem-icon">D</div>
+                        Democratic %
                     </div>
+                    <input type="range" class="filter-slider" id="demSlider" min="0" max="100" value="0">
+                    <div class="filter-value" id="demValue">Show areas ≥ 0%</div>
                 </div>
-
-                <div class="filter-group">
-                    <label class="filter-label">Democratic Percentage</label>
-                    <div class="filter-inputs">
-                        <input type="number" class="filter-input" id="demMin" placeholder="Min" step="0.1">
-                        <input type="number" class="filter-input" id="demMax" placeholder="Max" step="0.1">
+                
+                <div class="filter-item">
+                    <div class="filter-label">
+                        <div class="party-icon rep-icon">R</div>
+                        Republican %
                     </div>
+                    <input type="range" class="filter-slider" id="repSlider" min="0" max="100" value="0">
+                    <div class="filter-value" id="repValue">Show areas ≥ 0%</div>
                 </div>
-
-                <div class="filter-group">
-                    <label class="filter-label">Republican Percentage</label>
-                    <div class="filter-inputs">
-                        <input type="number" class="filter-input" id="repMin" placeholder="Min" step="0.1">
-                        <input type="number" class="filter-input" id="repMax" placeholder="Max" step="0.1">
-                    </div>
+                
+                <div class="filter-item">
+                    <div class="filter-label">White %</div>
+                    <input type="range" class="filter-slider" id="whiteSlider" min="0" max="100" value="0">
+                    <div class="filter-value" id="whiteValue">Show areas ≥ 0%</div>
                 </div>
-
-                <div class="filter-group">
-                    <label class="filter-label">Voting Age Population</label>
-                    <div class="filter-inputs">
-                        <input type="number" class="filter-input" id="vapMin" placeholder="Min">
-                        <input type="number" class="filter-input" id="vapMax" placeholder="Max">
-                    </div>
+                
+                <div class="filter-item">
+                    <div class="filter-label">Black %</div>
+                    <input type="range" class="filter-slider" id="blackSlider" min="0" max="100" value="0">
+                    <div class="filter-value" id="blackValue">Show areas ≥ 0%</div>
                 </div>
-
-                <div class="filter-group">
-                    <label class="filter-label">White VAP %</label>
-                    <div class="filter-inputs">
-                        <input type="number" class="filter-input" id="whiteVapMin" placeholder="Min" step="0.1">
-                        <input type="number" class="filter-input" id="whiteVapMax" placeholder="Max" step="0.1">
-                    </div>
+                
+                <div class="filter-item">
+                    <div class="filter-label">Hispanic %</div>
+                    <input type="range" class="filter-slider" id="hispanicSlider" min="0" max="100" value="0">
+                    <div class="filter-value" id="hispanicValue">Show areas ≥ 0%</div>
                 </div>
-
-                <div class="filter-group">
-                    <label class="filter-label">Black VAP %</label>
-                    <div class="filter-inputs">
-                        <input type="number" class="filter-input" id="blackVapMin" placeholder="Min" step="0.1">
-                        <input type="number" class="filter-input" id="blackVapMax" placeholder="Max" step="0.1">
-                    </div>
+                
+                <div class="filter-item">
+                    <div class="filter-label">Asian %</div>
+                    <input type="range" class="filter-slider" id="asianSlider" min="0" max="100" value="0">
+                    <div class="filter-value" id="asianValue">Show areas ≥ 0%</div>
                 </div>
-
-                <div class="filter-group">
-                    <label class="filter-label">Hispanic VAP %</label>
-                    <div class="filter-inputs">
-                        <input type="number" class="filter-input" id="hispanicVapMin" placeholder="Min" step="0.1">
-                        <input type="number" class="filter-input" id="hispanicVapMax" placeholder="Max" step="0.1">
-                    </div>
-                </div>
-
-                <button class="reset-btn" onclick="resetFilters()">Reset All Filters</button>
             </div>
-
-            <div class="section">
-                <h3>📊 Summary Statistics</h3>
-                <div id="summaryContainer">
-                    <div class="loading">
-                        <div class="spinner"></div>
-                        Loading data...
-                    </div>
+            
+            <div class="section" id="summarySection">
+                <div class="section-title">Selected Polygons Summary</div>
+                <div id="summaryContent">
+                    <p style="color: #666; text-align: center; font-size: 12px;">Select areas to view data</p>
                 </div>
             </div>
         </div>
-
+        
         <div class="map-container">
             <div id="map"></div>
+            <div class="legend" id="legend">
+                <h4>Democratic %</h4>
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: #8b0000;"></div>
+                    <span>0-20%</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: #dc143c;"></div>
+                    <span>20-40%</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: #ff6b6b;"></div>
+                    <span>40-49%</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: #4dabf7;"></div>
+                    <span>50-60%</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: #1864ab;"></div>
+                    <span>60%+</span>
+                </div>
+            </div>
+            <div class="credit">Analysis by Ifte Islam PhD</div>
         </div>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.min.js"></script>
     <script>
-        let map, geojsonLayer, allData, selectedFeatures = [];
+        let map, geoJsonLayer, selectedFeatures = [];
+        let originalData = null;
+        let drawnItems = null;
+        let isBufferMode = false;
+        let selectedPrecincts = new Set();
+        let bufferRadius = 10;
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(() => {
+                updateStatus('Initializing...');
+                initMap();
+            }, 100);
+            
+            setTimeout(() => {
+                if (!originalData) {
+                    updateStatus('Loading data from GitHub...');
+                    loadFromGitHub();
+                }
+            }, 1000);
+        });
 
         // Initialize map
         function initMap() {
-            map = L.map('map').setView([39.8283, -98.5795], 4);
-            
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '© OpenStreetMap contributors'
-            }).addTo(map);
-        }
-
-        // Load GeoJSON data
-        async function loadData() {
             try {
-                const response = await window.fs.readFile('propcol.geojson', { encoding: 'utf8' });
-                allData = JSON.parse(response);
-                displayData(allData);
-                updateSummary();
+                updateStatus('Setting up map...');
+                
+                map = L.map('map').setView([33.2148, -96.8435], 10); // Collin County center
+                
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '© OpenStreetMap contributors'
+                }).addTo(map);
+
+                map.on('click', function(e) {
+                    if (isBufferMode) {
+                        createBufferSelection(e.latlng);
+                    }
+                });
+
+                updateStatus('Map ready, loading data...');
+                setupDrawingControls();
+                setupBufferControls();
+                
             } catch (error) {
-                console.error('Error loading data:', error);
-                document.getElementById('summaryContainer').innerHTML = 
-                    '<div style="color: #ff6b6b; text-align: center; padding: 2rem;">Error loading data. Please ensure propcol.geojson is uploaded.</div>';
+                updateStatus('Error initializing map: ' + error.message);
             }
         }
 
-        // Get color based on Democratic percentage
-        function getColor(demPct) {
-            if (demPct == null) return '#gray';
-            return demPct > 0.5 ? '#3b82f6' : '#ef4444';
+        // Setup drawing controls
+        function setupDrawingControls() {
+            try {
+                if (typeof L.Draw === 'undefined') {
+                    setupSimpleSelection();
+                    return;
+                }
+                
+                drawnItems = new L.FeatureGroup();
+                map.addLayer(drawnItems);
+
+                const drawControl = new L.Control.Draw({
+                    position: 'topright',
+                    draw: {
+                        polygon: true,
+                        rectangle: true,
+                        circle: true,
+                        polyline: false,
+                        marker: false,
+                        circlemarker: false
+                    },
+                    edit: {
+                        featureGroup: drawnItems,
+                        remove: true
+                    }
+                });
+                map.addControl(drawControl);
+
+                map.on(L.Draw.Event.CREATED, function(e) {
+                    const layer = e.layer;
+                    drawnItems.addLayer(layer);
+                    selectFeaturesInDrawnArea(layer);
+                });
+
+                map.on(L.Draw.Event.DELETED, function(e) {
+                    selectedFeatures = [];
+                    updateSummary();
+                    resetHighlight();
+                });
+                
+            } catch (error) {
+                setupSimpleSelection();
+            }
         }
 
-        // Style function for features
+        function setupSimpleSelection() {
+            const modeInfo = document.getElementById('modeInfo');
+            if (modeInfo) {
+                modeInfo.textContent = 'Click individual polygons to select them';
+            }
+        }
+
+        // Setup buffer controls
+        function setupBufferControls() {
+            const bufferRange = document.getElementById('bufferRange');
+            const bufferValue = document.getElementById('bufferValue');
+            
+            if (bufferRange && bufferValue) {
+                bufferRange.addEventListener('input', function() {
+                    bufferRadius = parseInt(this.value);
+                    bufferValue.textContent = bufferRadius + ' miles';
+                    
+                    if (isBufferMode) {
+                        const modeInfo = document.getElementById('modeInfo');
+                        if (modeInfo) {
+                            modeInfo.textContent = `Click anywhere to create ${bufferRadius} mile buffer`;
+                        }
+                        updateStatus(`Buffer mode ON - ${bufferRadius} miles`);
+                    }
+                });
+                
+                bufferValue.textContent = bufferRadius + ' miles';
+            }
+        }
+
+        // Toggle buffer mode
+        function toggleBufferMode() {
+            isBufferMode = !isBufferMode;
+            const bufferBtn = document.getElementById('bufferBtn');
+            const bufferControls = document.getElementById('bufferControls');
+            const modeInfo = document.getElementById('modeInfo');
+            const mapContainer = document.getElementById('map');
+            
+            if (isBufferMode) {
+                bufferBtn.classList.add('buffer-active');
+                bufferBtn.textContent = 'Exit Buffer Mode';
+                bufferControls.style.display = 'flex';
+                modeInfo.textContent = `Click anywhere to create ${bufferRadius} mile buffer`;
+                modeInfo.style.fontWeight = 'bold';
+                modeInfo.style.color = '#28a745';
+                map.getContainer().style.cursor = 'crosshair';
+                mapContainer.classList.add('buffer-mode-active');
+                updateStatus(`Buffer mode ON - ${bufferRadius} miles`);
+                
+                if (geoJsonLayer) {
+                    geoJsonLayer.eachLayer(function(layer) {
+                        layer.off('click');
+                    });
+                }
+            } else {
+                bufferBtn.classList.remove('buffer-active');
+                bufferBtn.textContent = 'Buffer Select';
+                bufferControls.style.display = 'none';
+                modeInfo.textContent = 'Click polygons to select';
+                modeInfo.style.fontWeight = 'normal';
+                modeInfo.style.color = '#666';
+                map.getContainer().style.cursor = '';
+                mapContainer.classList.remove('buffer-mode-active');
+                updateStatus('Individual selection mode');
+                
+                if (geoJsonLayer) {
+                    geoJsonLayer.eachLayer(function(layer) {
+                        if (layer.originalClickHandler) {
+                            layer.on('click', layer.originalClickHandler);
+                        }
+                    });
+                }
+            }
+        }
+
+        // Create buffer selection
+        function createBufferSelection(latlng) {
+            resetHighlight();
+            
+            if (drawnItems) {
+                drawnItems.clearLayers();
+            }
+            
+            const radiusInDegrees = bufferRadius / 69;
+            
+            const bufferCircle = L.circle(latlng, {
+                radius: bufferRadius * 1609.34,
+                color: '#ff7800',
+                fillColor: '#ff7800',
+                fillOpacity: 0.3,
+                weight: 3,
+                opacity: 0.8
+            });
+            
+            bufferCircle.addTo(map);
+            
+            if (drawnItems) {
+                drawnItems.addLayer(bufferCircle);
+            }
+            
+            selectFeaturesInBuffer(latlng, radiusInDegrees);
+        }
+
+        // Select features in buffer
+        function selectFeaturesInBuffer(centerPoint, radiusInDegrees) {
+            selectedFeatures = [];
+            
+            if (!geoJsonLayer) {
+                updateStatus('No map data available');
+                return;
+            }
+
+            let selectedCount = 0;
+
+            geoJsonLayer.eachLayer(function(layer) {
+                const feature = layer.feature;
+                
+                if (isFeatureInBuffer(feature, centerPoint, radiusInDegrees)) {
+                    selectedFeatures.push({feature: feature, layer: layer});
+                    layer.setStyle(highlightStyle(feature));
+                    selectedCount++;
+                } else {
+                    layer.setStyle(style(feature));
+                }
+            });
+            
+            updateSummary();
+            updateStatus(`Selected ${selectedCount} areas within ${bufferRadius} miles`);
+            
+            if (selectedCount === 0) {
+                updateStatus(`No areas found within ${bufferRadius} miles - try larger radius`);
+            }
+        }
+
+        // Check if feature is in buffer
+        function isFeatureInBuffer(feature, centerPoint, radiusInDegrees) {
+            if (!feature.geometry || !feature.geometry.coordinates) {
+                return false;
+            }
+            
+            try {
+                if (feature.geometry.type === 'Polygon') {
+                    const coords = feature.geometry.coordinates[0];
+                    let totalLat = 0, totalLng = 0, validPoints = 0;
+                    
+                    for (let i = 0; i < coords.length - 1; i++) {
+                        const pointLng = coords[i][0];
+                        const pointLat = coords[i][1];
+                        
+                        totalLat += pointLat;
+                        totalLng += pointLng;
+                        validPoints++;
+                        
+                        const distance = Math.sqrt(
+                            Math.pow(pointLat - centerPoint.lat, 2) + 
+                            Math.pow(pointLng - centerPoint.lng, 2)
+                        );
+                        
+                        if (distance <= radiusInDegrees) {
+                            return true;
+                        }
+                    }
+                    
+                    if (validPoints > 0) {
+                        const centroidLat = totalLat / validPoints;
+                        const centroidLng = totalLng / validPoints;
+                        const centroidDistance = Math.sqrt(
+                            Math.pow(centroidLat - centerPoint.lat, 2) + 
+                            Math.pow(centroidLng - centerPoint.lng, 2)
+                        );
+                        
+                        return centroidDistance <= radiusInDegrees;
+                    }
+                }
+                return false;
+            } catch (e) {
+                return false;
+            }
+        }
+
+        // Clear all selections
+        function clearAllSelections() {
+            selectedFeatures = [];
+            
+            if (drawnItems) {
+                drawnItems.clearLayers();
+            }
+            
+            if (isBufferMode) {
+                toggleBufferMode();
+            }
+            
+            resetHighlight();
+            updateSummary();
+            updateStatus('Selections cleared');
+        }
+
+        // Setup precinct filter
+        function setupPrecinctFilter(data) {
+            const precincts = [...new Set(data.features.map(f => f.properties.PCTKEY || 'Unknown'))].sort();
+            selectedPrecincts = new Set(precincts);
+            
+            const precinctFilter = document.getElementById('precinctFilter');
+            if (!precinctFilter) return;
+            
+            precinctFilter.innerHTML = '';
+            
+            precincts.forEach(precinct => {
+                const option = document.createElement('option');
+                option.value = precinct;
+                option.textContent = precinct;
+                option.selected = true;
+                precinctFilter.appendChild(option);
+            });
+
+            precinctFilter.addEventListener('change', function() {
+                selectedPrecincts.clear();
+                Array.from(this.selectedOptions).forEach(option => {
+                    selectedPrecincts.add(option.value);
+                });
+                applyAllFilters();
+            });
+        }
+
+        // Select all precincts
+        function selectAllPrecincts() {
+            const precinctFilter = document.getElementById('precinctFilter');
+            if (!precinctFilter) return;
+            
+            Array.from(precinctFilter.options).forEach(option => {
+                option.selected = true;
+                selectedPrecincts.add(option.value);
+            });
+            applyAllFilters();
+        }
+
+        // Select no precincts
+        function selectNoPrecincts() {
+            const precinctFilter = document.getElementById('precinctFilter');
+            if (!precinctFilter) return;
+            
+            Array.from(precinctFilter.options).forEach(option => {
+                option.selected = false;
+            });
+            selectedPrecincts.clear();
+            applyAllFilters();
+        }
+
+        // Load from GitHub
+        async function loadFromGitHub() {
+            let url = document.getElementById('githubUrl').value.trim();
+            if (!url) {
+                url = 'https://raw.githubusercontent.com/CentristNation/CD3Col/main/propcol.geojson';
+                document.getElementById('githubUrl').value = url;
+            }
+
+            updateStatus('Loading from GitHub...');
+
+            try {
+                let response = await fetch(url);
+                
+                if (!response.ok) {
+                    const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url);
+                    response = await fetch(proxyUrl);
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                }
+                
+                const data = await response.text();
+                const geojson = JSON.parse(data);
+                processGeoJSON(geojson);
+                updateStatus('Data loaded successfully from GitHub!');
+                
+            } catch (error) {
+                updateStatus('Failed to load from GitHub: ' + error.message);
+            }
+        }
+
+        // Load manual data
+        function loadManualData() {
+            const data = document.getElementById('manualData').value.trim();
+            if (!data) {
+                alert('Please paste GeoJSON data first');
+                return;
+            }
+
+            updateStatus('Processing pasted data...');
+
+            try {
+                const geojson = JSON.parse(data);
+                processGeoJSON(geojson);
+                updateStatus('Data loaded from pasted content!');
+            } catch (error) {
+                updateStatus('Invalid GeoJSON data: ' + error.message);
+            }
+        }
+
+        // Process GeoJSON
+        function processGeoJSON(geojson) {
+            try {
+                if (!geojson || !geojson.features || geojson.features.length === 0) {
+                    throw new Error('Invalid or empty GeoJSON data');
+                }
+                
+                originalData = geojson;
+                setupFilters();
+                setupPrecinctFilter(geojson);
+                loadGeoJSON(geojson);
+                
+                const featureCount = geojson.features.length;
+                const precinctCount = new Set(geojson.features.map(f => f.properties.PCTKEY)).size;
+                updateStatus(`Ready! ${featureCount} districts, ${precinctCount} precincts loaded.`);
+                
+            } catch (error) {
+                updateStatus('Error processing data: ' + error.message);
+            }
+        }
+
+        // Setup filters
+        function setupFilters() {
+            const filters = ['dem', 'rep', 'white', 'black', 'hispanic', 'asian'];
+            
+            filters.forEach(filter => {
+                const slider = document.getElementById(filter + 'Slider');
+                const value = document.getElementById(filter + 'Value');
+                
+                if (slider && value) {
+                    slider.addEventListener('input', function() {
+                        value.textContent = `Show areas ≥ ${this.value}%`;
+                        applyAllFilters();
+                    });
+                }
+            });
+        }
+
+        // Apply all filters
+        function applyAllFilters() {
+            if (!originalData) return;
+            
+            const filters = {
+                dem: parseInt(document.getElementById('demSlider').value) / 100,
+                rep: parseInt(document.getElementById('repSlider').value) / 100,
+                white: parseInt(document.getElementById('whiteSlider').value) / 100,
+                black: parseInt(document.getElementById('blackSlider').value) / 100,
+                hispanic: parseInt(document.getElementById('hispanicSlider').value) / 100,
+                asian: parseInt(document.getElementById('asianSlider').value) / 100
+            };
+            
+            const filteredData = {
+                ...originalData,
+                features: originalData.features.filter(feature => {
+                    const props = feature.properties;
+                    
+                    // Precinct filter
+                    const precinct = props.PCTKEY || 'Unknown';
+                    if (!selectedPrecincts.has(precinct)) {
+                        return false;
+                    }
+                    
+                    // Demographic filters
+                    return (props.Dem_pct || 0) >= filters.dem &&
+                           (props.Rep_pct || 0) >= filters.rep &&
+                           (props.White_Vap_pct || 0) >= filters.white &&
+                           (props.Black_Vap_pct || 0) >= filters.black &&
+                           (props.Hispanic_Vap_pct || 0) >= filters.hispanic &&
+                           (props.Asian_Vap_pct || 0) >= filters.asian;
+                })
+            };
+            
+            loadGeoJSON(filteredData);
+            selectedFeatures = [];
+            updateSummary();
+        }
+
+        // Get color for Democratic percentage
+        function getColor(demPct) {
+            const pct = (parseFloat(demPct) || 0) * 100;
+            
+            if (pct < 20) return '#8b0000';
+            if (pct < 40) return '#dc143c';
+            if (pct < 49) return '#ff6b6b';
+            if (pct < 60) return '#4dabf7';
+            return '#1864ab';
+        }
+
+        // Style polygons
         function style(feature) {
-            const demPct = feature.properties.Dem_pct;
+            const demPct = parseFloat(feature.properties.Dem_pct) || 0;
             return {
                 fillColor: getColor(demPct),
                 weight: 1,
@@ -381,276 +884,179 @@
             };
         }
 
-        // Highlight feature on hover
-        function highlightFeature(e) {
-            const layer = e.target;
-            layer.setStyle({
+        // Highlight style
+        function highlightStyle(feature) {
+            return {
+                fillColor: getColor(feature.properties.Dem_pct),
                 weight: 3,
-                color: '#ffffff',
+                color: '#ffff00',
                 fillOpacity: 0.9
-            });
+            };
         }
 
-        // Reset highlight
-        function resetHighlight(e) {
-            if (selectedFeatures.includes(e.target)) return;
-            geojsonLayer.resetStyle(e.target);
-        }
-
-        // Handle feature click
-        function onFeatureClick(e) {
-            const layer = e.target;
-            const feature = layer.feature;
-            
-            if (selectedFeatures.includes(layer)) {
-                // Deselect
-                selectedFeatures = selectedFeatures.filter(f => f !== layer);
-                geojsonLayer.resetStyle(layer);
-            } else {
-                // Select
-                selectedFeatures.push(layer);
-                layer.setStyle({
-                    weight: 4,
-                    color: '#ffff00',
-                    fillOpacity: 0.9
-                });
-            }
-            
-            updateSummary();
-            updateSelectionInfo();
-        }
-
-        // Bind events to features
-        function onEachFeature(feature, layer) {
-            layer.on({
-                mouseover: highlightFeature,
-                mouseout: resetHighlight,
-                click: onFeatureClick
-            });
-
-            // Create popup content
-            const props = feature.properties;
-            const popupContent = `
-                <div style="font-family: Arial, sans-serif;">
-                    <h4 style="margin: 0 0 10px 0; color: #333;">${props.County || 'Area'}</h4>
-                    <table style="width: 100%; font-size: 12px;">
-                        <tr><td><b>Democratic %:</b></td><td>${(props.Dem_pct * 100).toFixed(1)}%</td></tr>
-                        <tr><td><b>Republican %:</b></td><td>${(props.Rep_pct * 100).toFixed(1)}%</td></tr>
-                        <tr><td><b>Turnout %:</b></td><td>${(props.turn_pct * 100).toFixed(1)}%</td></tr>
-                        <tr><td><b>Registered Voters:</b></td><td>${props.Reg_Voter?.toLocaleString() || 'N/A'}</td></tr>
-                        <tr><td><b>Votes Cast:</b></td><td>${props.Voted?.toLocaleString() || 'N/A'}</td></tr>
-                    </table>
-                </div>
-            `;
-            layer.bindPopup(popupContent);
-        }
-
-        // Display data on map
-        function displayData(data) {
-            if (geojsonLayer) {
-                map.removeLayer(geojsonLayer);
+        // Load GeoJSON onto map
+        function loadGeoJSON(geojson) {
+            if (geoJsonLayer) {
+                map.removeLayer(geoJsonLayer);
             }
 
-            geojsonLayer = L.geoJSON(data, {
+            geoJsonLayer = L.geoJSON(geojson, {
                 style: style,
-                onEachFeature: onEachFeature
+                onEachFeature: function(feature, layer) {
+                    const props = feature.properties;
+                    const demPct = (parseFloat(props.Dem_pct) || 0) * 100;
+                    
+                    layer.bindTooltip(`
+                        <strong>Precinct:</strong> ${props.PCTKEY || 'N/A'}<br>
+                        <strong>VTD:</strong> ${props.VTD || 'N/A'}<br>
+                        <strong>Dem %:</strong> ${demPct.toFixed(1)}%
+                    `);
+
+                    layer.originalClickHandler = function(e) {
+                        toggleFeatureSelection(feature, layer);
+                        L.DomEvent.stopPropagation(e);
+                    };
+
+                    layer.on('click', layer.originalClickHandler);
+                }
             }).addTo(map);
 
-            map.fitBounds(geojsonLayer.getBounds());
+            map.fitBounds(geoJsonLayer.getBounds(), {padding: [20, 20]});
         }
 
-        // Apply filters
-        function applyFilters() {
-            if (!allData) return;
-
-            const filters = {
-                turnoutMin: parseFloat(document.getElementById('turnoutMin').value) / 100 || null,
-                turnoutMax: parseFloat(document.getElementById('turnoutMax').value) / 100 || null,
-                demMin: parseFloat(document.getElementById('demMin').value) / 100 || null,
-                demMax: parseFloat(document.getElementById('demMax').value) / 100 || null,
-                repMin: parseFloat(document.getElementById('repMin').value) / 100 || null,
-                repMax: parseFloat(document.getElementById('repMax').value) / 100 || null,
-                vapMin: parseFloat(document.getElementById('vapMin').value) || null,
-                vapMax: parseFloat(document.getElementById('vapMax').value) || null,
-                whiteVapMin: parseFloat(document.getElementById('whiteVapMin').value) / 100 || null,
-                whiteVapMax: parseFloat(document.getElementById('whiteVapMax').value) / 100 || null,
-                blackVapMin: parseFloat(document.getElementById('blackVapMin').value) / 100 || null,
-                blackVapMax: parseFloat(document.getElementById('blackVapMax').value) / 100 || null,
-                hispanicVapMin: parseFloat(document.getElementById('hispanicVapMin').value) / 100 || null,
-                hispanicVapMax: parseFloat(document.getElementById('hispanicVapMax').value) / 100 || null
-            };
-
-            const filteredData = {
-                ...allData,
-                features: allData.features.filter(feature => {
-                    const props = feature.properties;
-                    
-                    return Object.keys(filters).every(key => {
-                        const value = filters[key];
-                        if (value === null) return true;
-
-                        const isMax = key.includes('Max');
-                        const propKey = key.replace('Min', '').replace('Max', '');
-                        
-                        let propValue;
-                        switch(propKey) {
-                            case 'turnout': propValue = props.turn_pct; break;
-                            case 'dem': propValue = props.Dem_pct; break;
-                            case 'rep': propValue = props.Rep_pct; break;
-                            case 'vap': propValue = props.vap; break;
-                            case 'whiteVap': propValue = props.White_Vap_pct; break;
-                            case 'blackVap': propValue = props.Black_Vap_pct; break;
-                            case 'hispanicVap': propValue = props.Hispanic_Vap_pct; break;
-                            default: return true;
-                        }
-
-                        if (propValue == null) return true;
-                        return isMax ? propValue <= value : propValue >= value;
-                    });
-                })
-            };
-
+        // Select features in drawn area
+        function selectFeaturesInDrawnArea(drawnLayer) {
             selectedFeatures = [];
-            displayData(filteredData);
-            updateSummary();
-            updateSelectionInfo();
-        }
-
-        // Reset all filters
-        function resetFilters() {
-            document.querySelectorAll('.filter-input').forEach(input => input.value = '');
-            selectedFeatures = [];
-            displayData(allData);
-            updateSummary();
-            updateSelectionInfo();
-        }
-
-        // Update selection info
-        function updateSelectionInfo() {
-            const info = document.getElementById('selectionInfo');
-            if (selectedFeatures.length === 0) {
-                info.textContent = 'Click on map areas to analyze';
-            } else {
-                info.textContent = `${selectedFeatures.length} area${selectedFeatures.length > 1 ? 's' : ''} selected`;
-            }
-        }
-
-        // Update summary statistics
-        function updateSummary() {
-            const container = document.getElementById('summaryContainer');
             
-            let features;
-            if (selectedFeatures.length > 0) {
-                features = selectedFeatures.map(layer => layer.feature);
-            } else if (geojsonLayer) {
-                features = [];
-                geojsonLayer.eachLayer(layer => features.push(layer.feature));
-            } else {
-                return;
-            }
+            if (!geoJsonLayer) return;
 
-            if (features.length === 0) {
-                container.innerHTML = '<div style="text-align: center; color: #666;">No data to display</div>';
-                return;
-            }
-
-            // Calculate sums and averages
-            const sums = {};
-            const averages = {};
-            const counts = {};
-
-            // Columns to sum
-            const sumColumns = ['Reg_Voter', 'Voted', 'Dem', 'Rep', 'Total', 'vap', 'anglovap', 'nanglovap', 'asianvap', 'blackvap', 'hispvap', 'bhvap'];
+            geoJsonLayer.eachLayer(function(layer) {
+                const feature = layer.feature;
+                if (isFeatureInDrawnArea(feature, drawnLayer)) {
+                    selectedFeatures.push({feature: feature, layer: layer});
+                    layer.setStyle(highlightStyle(feature));
+                } else {
+                    layer.setStyle(style(feature));
+                }
+            });
             
-            // Columns to average
-            const avgColumns = ['turn_pct', 'Dem_pct', 'Rep_pct', 'White_Vap_pct', 'Black_Vap_pct', 'Asian_Vap_pct', 'Hispanic_Vap_pct'];
+            updateSummary();
+        }
 
-            // Initialize
-            sumColumns.forEach(col => sums[col] = 0);
-            avgColumns.forEach(col => { averages[col] = 0; counts[col] = 0; });
-
-            // Calculate
-            features.forEach(feature => {
-                const props = feature.properties;
+        // Check if feature is in drawn area
+        function isFeatureInDrawnArea(feature, drawnLayer) {
+            if (!feature.geometry || !feature.geometry.coordinates) return false;
+            
+            try {
+                const drawnBounds = drawnLayer.getBounds();
                 
-                sumColumns.forEach(col => {
-                    if (props[col] != null && !isNaN(props[col])) {
-                        sums[col] += props[col];
-                    }
-                });
-
-                avgColumns.forEach(col => {
-                    if (props[col] != null && !isNaN(props[col])) {
-                        averages[col] += props[col];
-                        counts[col]++;
-                    }
-                });
-            });
-
-            // Finalize averages
-            avgColumns.forEach(col => {
-                if (counts[col] > 0) {
-                    averages[col] = averages[col] / counts[col];
+                if (feature.geometry.type === 'Polygon') {
+                    const coords = feature.geometry.coordinates[0];
+                    return coords.some(coord => {
+                        return drawnBounds.contains([coord[1], coord[0]]);
+                    });
                 }
-            });
-
-            // Generate table
-            let tableHTML = `
-                <div class="summary-table">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Metric</th>
-                                <th>Value</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-            `;
-
-            // Add sums
-            Object.entries(sums).forEach(([key, value]) => {
-                if (value > 0) {
-                    tableHTML += `
-                        <tr>
-                            <td class="stat-label">${key.replace(/_/g, ' ')}</td>
-                            <td class="stat-value">${value.toLocaleString()}</td>
-                        </tr>
-                    `;
-                }
-            });
-
-            // Add averages
-            Object.entries(averages).forEach(([key, value]) => {
-                if (counts[key] > 0) {
-                    const displayValue = key.includes('_pct') ? `${(value * 100).toFixed(1)}%` : value.toFixed(2);
-                    tableHTML += `
-                        <tr>
-                            <td class="stat-label">${key.replace(/_/g, ' ')}</td>
-                            <td class="stat-value">${displayValue}</td>
-                        </tr>
-                    `;
-                }
-            });
-
-            tableHTML += `
-                        </tbody>
-                    </table>
-                </div>
-            `;
-
-            container.innerHTML = tableHTML;
+                return false;
+            } catch (e) {
+                return false;
+            }
         }
 
-        // Add event listeners for filters
-        document.addEventListener('DOMContentLoaded', function() {
-            initMap();
-            loadData();
+        // Toggle feature selection
+        function toggleFeatureSelection(feature, layer) {
+            const index = selectedFeatures.findIndex(f => f.feature === feature);
+            
+            if (index > -1) {
+                selectedFeatures.splice(index, 1);
+                layer.setStyle(style(feature));
+            } else {
+                selectedFeatures.push({feature: feature, layer: layer});
+                layer.setStyle(highlightStyle(feature));
+            }
+            
+            updateSummary();
+        }
 
-            // Add change listeners to all filter inputs
-            document.querySelectorAll('.filter-input').forEach(input => {
-                input.addEventListener('input', applyFilters);
+        // Reset highlights
+        function resetHighlight() {
+            if (geoJsonLayer) {
+                geoJsonLayer.eachLayer(function(layer) {
+                    layer.setStyle(style(layer.feature));
+                });
+            }
+        }
+
+        // Update summary
+        function updateSummary() {
+            const summaryContent = document.getElementById('summaryContent');
+            
+            if (selectedFeatures.length === 0) {
+                summaryContent.innerHTML = '<p style="color: #666; text-align: center; font-size: 12px;">Select areas to view data</p>';
+                return;
+            }
+
+            const aggregated = aggregateData(selectedFeatures.map(sf => sf.feature.properties));
+            
+            let html = `<div class="summary-item">
+                <span class="summary-label">Selected Areas:</span>
+                <span class="summary-value">${selectedFeatures.length}</span>
+            </div>`;
+            
+            Object.entries(aggregated).forEach(([key, value]) => {
+                let displayValue;
+                if (key.includes('_pct') || key.includes('_Pct')) {
+                    displayValue = `${(value * 100).toFixed(1)}%`;
+                } else {
+                    displayValue = value.toLocaleString();
+                }
+                
+                html += `<div class="summary-item">
+                    <span class="summary-label">${formatLabel(key)}:</span>
+                    <span class="summary-value">${displayValue}</span>
+                </div>`;
             });
-        });
+            
+            summaryContent.innerHTML = html;
+        }
+
+        // Aggregate data
+        function aggregateData(propertiesArray) {
+            if (propertiesArray.length === 0) return {};
+            
+            const result = {};
+            const sampleProps = propertiesArray[0];
+            
+            Object.keys(sampleProps).forEach(key => {
+                if (key === 'geometry' || key === 'GEOID' || key === 'PCTKEY') return;
+                
+                const values = propertiesArray.map(p => parseFloat(p[key]) || 0).filter(v => !isNaN(v));
+                if (values.length === 0) return;
+                
+                if (key.includes('_pct') || key.includes('_Pct')) {
+                    result[key] = values.reduce((sum, val) => sum + val, 0) / values.length;
+                } else if (['Dem', 'Rep', 'Total'].includes(key) || key.endsWith('vap')) {
+                    result[key] = values.reduce((sum, val) => sum + val, 0);
+                }
+            });
+            
+            return result;
+        }
+
+        // Format labels
+        function formatLabel(key) {
+            return key.replace(/_/g, ' ')
+                     .replace(/pct/gi, '%')
+                     .replace(/vap/gi, 'VAP')
+                     .replace(/\b\w/g, l => l.toUpperCase());
+        }
+
+        // Update status
+        function updateStatus(message) {
+            const statusEl = document.getElementById('statusMessage');
+            if (statusEl) {
+                statusEl.textContent = message;
+            }
+        }
     </script>
 </body>
 </html>
