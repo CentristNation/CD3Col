@@ -328,6 +328,12 @@
                 </div>
                 
                 <div class="filter-item">
+                    <div class="filter-label">Turnout %</div>
+                    <input type="range" class="filter-slider" id="turnoutSlider" min="0" max="100" value="0">
+                    <div class="filter-value" id="turnoutValue">Show areas ≥ 0%</div>
+                </div>
+                
+                <div class="filter-item">
                     <div class="filter-label">White %</div>
                     <input type="range" class="filter-slider" id="whiteSlider" min="0" max="100" value="0">
                     <div class="filter-value" id="whiteValue">Show areas ≥ 0%</div>
@@ -776,7 +782,7 @@
 
         // Setup filters
         function setupFilters() {
-            const filters = ['dem', 'rep', 'white', 'black', 'hispanic', 'asian'];
+            const filters = ['dem', 'rep', 'turnout', 'white', 'black', 'hispanic', 'asian'];
             
             filters.forEach(filter => {
                 const slider = document.getElementById(filter + 'Slider');
@@ -798,6 +804,7 @@
             const filters = {
                 dem: parseInt(document.getElementById('demSlider').value) / 100,
                 rep: parseInt(document.getElementById('repSlider').value) / 100,
+                turnout: parseInt(document.getElementById('turnoutSlider').value) / 100,
                 white: parseInt(document.getElementById('whiteSlider').value) / 100,
                 black: parseInt(document.getElementById('blackSlider').value) / 100,
                 hispanic: parseInt(document.getElementById('hispanicSlider').value) / 100,
@@ -818,6 +825,7 @@
                     // Demographic filters
                     return (props.Dem_pct || 0) >= filters.dem &&
                            (props.Rep_pct || 0) >= filters.rep &&
+                           (props.turn_pct || 0) >= filters.turnout &&
                            (props.White_Vap_pct || 0) >= filters.white &&
                            (props.Black_Vap_pct || 0) >= filters.black &&
                            (props.Hispanic_Vap_pct || 0) >= filters.hispanic &&
