@@ -408,8 +408,8 @@
             
             setTimeout(() => {
                 if (!originalData) {
-                    updateStatus('Loading data from GitHub...');
-                    loadFromGitHub();
+                    updateStatus('Loading propcol.geojson...');
+                    loadGeoJSONFromFile();
                 }
             }, 1000);
         });
@@ -733,54 +733,23 @@
             applyAllFilters();
         }
 
-        // Load from GitHub
-        async function loadFromGitHub() {
-            let url = document.getElementById('githubUrl').value.trim();
-            if (!url) {
-                url = 'https://raw.githubusercontent.com/CentristNation/CD3Col/main/propcol.geojson';
-                document.getElementById('githubUrl').value = url;
-            }
-
-            updateStatus('Loading from GitHub...');
-
+        // Load GeoJSON from local file
+        async function loadGeoJSONFromFile() {
+            updateStatus('Loading propcol.geojson...');
+            
             try {
-                let response = await fetch(url);
-                
+                const response = await fetch('propcol.geojson');
                 if (!response.ok) {
-                    const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url);
-                    response = await fetch(proxyUrl);
-                    
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
+                    throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 
-                const data = await response.text();
-                const geojson = JSON.parse(data);
+                const geojson = await response.json();
                 processGeoJSON(geojson);
-                updateStatus('Data loaded successfully from GitHub!');
+                updateStatus('Data loaded successfully!');
                 
             } catch (error) {
-                updateStatus('Failed to load from GitHub: ' + error.message);
-            }
-        }
-
-        // Load manual data
-        function loadManualData() {
-            const data = document.getElementById('manualData').value.trim();
-            if (!data) {
-                alert('Please paste GeoJSON data first');
-                return;
-            }
-
-            updateStatus('Processing pasted data...');
-
-            try {
-                const geojson = JSON.parse(data);
-                processGeoJSON(geojson);
-                updateStatus('Data loaded from pasted content!');
-            } catch (error) {
-                updateStatus('Invalid GeoJSON data: ' + error.message);
+                updateStatus('Error loading propcol.geojson: ' + error.message);
+                console.error('Failed to load propcol.geojson:', error);
             }
         }
 
